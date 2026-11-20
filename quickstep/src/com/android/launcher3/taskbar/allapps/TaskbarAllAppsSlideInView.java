@@ -17,6 +17,7 @@ package com.android.launcher3.taskbar.allapps;
 
 import static android.os.Trace.TRACE_TAG_APP;
 
+import static androidx.core.content.ContextCompat.getSystemService;
 import static com.android.app.animation.Interpolators.DECELERATED_EASE;
 import static com.android.app.animation.Interpolators.EMPHASIZED;
 import static com.android.app.animation.Interpolators.LINEAR;
@@ -27,9 +28,11 @@ import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import android.animation.Animator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.os.Trace;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -278,11 +281,17 @@ public class TaskbarAllAppsSlideInView extends AbstractSlideInView<TaskbarOverla
 
     @Override
     protected int getScrimColor(Context context) {
-        if (!mActivityContext.getDeviceProfile().shouldShowAllAppsOnSheet()) {
+        PowerManager powerManager = getSystemService(context, PowerManager.class);
+        boolean isPowerSaveMode = powerManager != null && powerManager.isPowerSaveMode();
+
+        if (isPowerSaveMode) {
+            // Power saving disables blur: keep the global scrim transparent.
+            return Color.TRANSPARENT;
+        } else if (!mActivityContext.getDeviceProfile().shouldShowAllAppsOnSheet()) {
             // Always use an opaque scrim if there's no sheet.
             return ColorTokens.AllAppsScrimColor.resolveColor(context);
-        } else if (!Flags.allAppsBlur()) {
-            // If there's a sheet but no blur, use the old scrim color.
+        } else if (!Flags.allAppsBlur() || isPowerSaveMode) {
+            // If there's a sheet but no blur or power saver disables blur, use the old scrim color.
             return LawnchairUtilsKt.getAllAppsBackgroundColor(context, 
                 ColorTokens.WidgetsPickerScrim.resolveColor(context));
         }

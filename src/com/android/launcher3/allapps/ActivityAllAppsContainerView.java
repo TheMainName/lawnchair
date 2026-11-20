@@ -46,6 +46,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.PowerManager;
 import android.os.Process;
 import android.os.UserManager;
 import android.util.AttributeSet;
@@ -958,6 +959,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     protected int getHeaderColor(float blendRatio) {
+        PowerManager powerManager = mActivityContext.getSystemService(PowerManager.class);
+        if (powerManager != null && powerManager.isPowerSaveMode()) {
+            return Color.TRANSPARENT;
+        }
         if (!mActivityContext.getDeviceProfile().shouldShowAllAppsOnSheet()) {
             float opacity = mSearchContainer.getAlpha();
             var showHeaderBackground = PreferenceCacheExtensionsKt.firstCached(
@@ -976,12 +981,18 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     private int getBackgroundColor() {
-        return mActivityContext.getDeviceProfile().shouldShowAllAppsOnSheet()
-                ? getBottomSheetBackgroundColor() : mScrimColor;
+        if (mActivityContext.getDeviceProfile().shouldShowAllAppsOnSheet()) {
+            return getBottomSheetBackgroundColor();
+        }
+        return mScrimColor;
     }
 
     // LC-Note: Hey! We cache this! see updateBottomSheetBackgroundColor() for more details.
     int getBottomSheetBackgroundColor() {
+        PowerManager powerManager = mActivityContext.getSystemService(PowerManager.class);
+        if (powerManager != null && powerManager.isPowerSaveMode()) {
+            return ColorUtils.setAlphaComponent(mCachedBottomSheetBgColor, 255);
+        }
         return mCachedBottomSheetBgColor;
     }
 

@@ -19,6 +19,7 @@ import static com.android.app.animation.Interpolators.DECELERATE;
 import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_ALLAPPS;
 
 import android.graphics.Color;
+import android.os.PowerManager;
 
 import app.lawnchair.theme.color.tokens.ColorTokens;
 import app.lawnchair.util.LawnchairUtilsKt;
@@ -101,6 +102,12 @@ public class AllAppsState extends LauncherState {
 
     @Override
     public ScrimColors getWorkspaceScrimColor(Launcher launcher) {
+        PowerManager powerManager = launcher.getSystemService(PowerManager.class);
+        boolean isPowerSaveMode = powerManager != null && powerManager.isPowerSaveMode();
+        if (isPowerSaveMode
+                && launcher.getDeviceProfile().shouldShowAllAppsOnSheet()) {
+            return new ScrimColors(Color.TRANSPARENT, /* foregroundColor */ Color.TRANSPARENT);
+        }
         return new ScrimColors(
                 /* backgroundColor */ launcher.getDeviceProfile().getDeviceProperties().isTablet()
                 ? LawnchairUtilsKt.getAllAppsBackgroundColor(launcher, 

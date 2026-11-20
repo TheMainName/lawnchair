@@ -21,6 +21,7 @@ import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_ALLAP
 
 import android.content.Context;
 import android.graphics.Color;
+import android.os.PowerManager;
 
 import app.lawnchair.theme.color.tokens.ColorTokens;
 import com.android.internal.jank.Cuj;
@@ -209,7 +210,11 @@ public class AllAppsState extends LauncherState {
     @Override
     public ScrimColors getWorkspaceScrimColor(Launcher launcher) {
         int backgroundColor;
-        if (!launcher.getDeviceProfile().shouldShowAllAppsOnSheet()) {
+        PowerManager powerManager = launcher.getSystemService(PowerManager.class);
+        boolean isPowerSaveMode = powerManager != null && powerManager.isPowerSaveMode();
+        if (isPowerSaveMode && launcher.getDeviceProfile().shouldShowAllAppsOnSheet()) {
+            backgroundColor = Color.TRANSPARENT;
+        } else if (!launcher.getDeviceProfile().shouldShowAllAppsOnSheet()) {
             // Always use an opaque scrim if there's no sheet.
             backgroundColor = ColorTokens.AllAppsScrimColor.resolveColor(launcher);
         } else if (!Flags.allAppsBlur()) {
